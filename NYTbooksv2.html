@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html class="ui-mobile"><head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>NYT Books Stuff</title>
+  
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.js"></script>
+  
+  
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/result-light.css">
+  
+    
+      <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    
+  
+    
+      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    
+  
+    
+      <script type="text/javascript" src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    
+  
+    
+      <link rel="stylesheet" type="text/css" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    
+  
+  <style type="text/css">
+     .bookThumbnail {
+     max-width: 128px;
+ }
+  </style>
+  
+</head>
+<body class="ui-mobile-viewport ui-overlay-a">
+  <div data-role="page" id="pageone" data-url="pageone" tabindex="0" class="ui-page ui-page-theme-a ui-page-active" style="">
+    <div data-role="header" role="banner" class="ui-header ui-bar-inherit"> <a href="#pageone" class="ui-btn-left ui-btn ui-icon-home ui-btn-icon-left" data-role="button" role="button">Home</a>
+
+         <h1 class="ui-title" role="heading" aria-level="1">NYT Books Stuff</h1>
+ <a href="#" class="ui-btn-right ui-btn ui-icon-search ui-btn-icon-left" data-role="button" role="button">Search</a>
+
+    </div>
+    <div data-role="main" class="ui-content">
+        <p>Get the lastest NYT Bestseller Lists.</p>
+        <p>Click the Update Lists button, then select the lists you want to see</p>
+    </div>
+    <div data-role="footer" role="contentinfo" class="ui-footer ui-bar-inherit"> <a id="btnUpdateLists" href="#pagelists" class="ui-btn ui-icon-home ui-btn-icon-left" data-role="button" role="button">Update Lists</a>
+
+    </div>
+</div>
+<div data-role="page" id="pagelists" data-url="pagelists">
+    <div data-role="header" data-position="fixed"> <a href="#pageone" class="ui-btn ui-icon-home ui-btn-icon-left">Home</a>
+
+         <h1>NYT Bestseller Lists</h1>
+ <a href="#" class="ui-btn ui-icon-search ui-btn-icon-left">Search</a>
+
+    </div>
+    <div id="page-content" data-role="main" class="ui-content">
+         <h2>Best Seller Lists</h2>
+
+    </div>
+</div>
+  
+
+
+<script type="text/javascript">//<![CDATA[ 
+
+$(document).ready(function () {
+
+    var arrayBookListNames = new Array();
+
+
+    // Construct the catalog query string
+    baseURL = 'https://api.nytimes.com/svc/books/v3/lists/hardcover-fiction.jsonp?callback=?&api-key=b39de01c4a066fde952cabf9b3cff582%3A14%3A60955541';
+    searchURL = baseURL + "";
+
+
+    function showBooks(intPos) {
+        // get the books for the list at the given index position
+
+        listURL = 'https://api.nytimes.com/svc/books/v3/lists/' + arrayBookListNames[intPos] + '.jsonp?callback=?&api-key=b39de01c4a066fde952cabf9b3cff582%3A14%3A60955541';
+
+        $.getJSON(listURL, function (data) {
+            //console.log(data);
+            // get the data
+            var contentString = "";
+            var arrBooks = data.results.books;
+            var book;
+            var listContent = '<div><ul id="lists" data-role="listview" data-inset="true">';
+           
+            //  loop through array of books 
+            $.each(arrBooks, function (i, entry) {
+                book = arrBooks[i];
+                listContent +=
+                    '<li>' +
+                    '<a href="#">' +
+                    '<img src="' + book.book_image + '">' +
+                    '<h2>' + book.title + '</h2>' +
+                    '<p>' + book.author + '</p>' +
+                    '</a>' +
+                    '</li>';
+            });
+
+            listContent += '</ul><div>';
+
+            $(listContent).appendTo("#page-content" + intPos).enhanceWithin();
+        });
+    };
+
+
+
+
+    //  get the list of lists
+    $("#btnUpdateLists").click(function () {
+        var listURL = 'https://api.nytimes.com/svc/books/v2/lists/names.jsonp?api-key=b39de01c4a066fde952cabf9b3cff582%3A14%3A60955541&callback=?';
+
+        $.getJSON(listURL, function (data) {
+            var results = data.results;
+            var list;
+            var pageContent = "";
+            var listContent = '<div><ul id="lists" data-role="listview" data-inset="true">';
+            //console.log(results);
+
+            // for each list, create a link and a page
+            $.each(results, function (i, entry) {
+                list = results[i];
+                listContent += '<li><a id="aPage' + i + '" href="#page' + i + '">' + list.display_name + '</a></li>';
+
+                pageContent +=
+                    '<div data-role="page" id="page' + i + '">' +
+                    '<div data-role="header" data-position="fixed">' +
+                    '<a href="#" class="ui-btn" data-rel="back">Go Back</a>' +
+                    '<h1>NYT Bestsellers</h1>' +
+                    '</div>' +
+
+
+                    '<div id="page-content' + i + '" data-role="main" class="ui-content">' +
+                    '<h2>' + list.display_name + '</h2><hr/>' +
+                    '</div></div>';
+
+                arrayBookListNames.push(list.list_name_encoded);
+            });
+
+            listContent += '</ul><div>';
+
+            $(listContent).appendTo("#page-content").enhanceWithin();
+            $(pageContent).appendTo("body").enhanceWithin();
+
+            for (var i = 0; i < arrayBookListNames.length; i++) {
+                createClickHandler(i);
+            }
+        });
+    });
+
+    function createClickHandler(intPage) {
+        $("#aPage" + intPage).click(function () {
+            showBooks(intPage);
+        });
+    }
+});
+//]]>  
+
+</script>
+
+
+
+
+
+
+
+<div class="ui-loader ui-corner-all ui-body-a ui-loader-default"><span class="ui-icon-loading"></span><h1>loading</h1></div></body></html>
